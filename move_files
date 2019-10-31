@@ -1,0 +1,54 @@
+import shutil
+import os
+from os import path
+import datetime
+
+
+def get_date_modified(filename):
+    ''' This function takes a specific file and returns its date modified
+    attribute in a MM YYYY format '''
+
+    t = datetime.date.fromtimestamp(path.getmtime('{}'.format(filename)))
+    strip = datetime.datetime.strptime(str(t), '%Y-%m-%d')
+
+    return strip.strftime('%m_%b %Y')
+
+def getYear(str_object):
+    '''str_object is a date format yyyy-mm-dd'''
+    
+    yyyy = str_object.split('-')
+    return yyyy[0]
+
+
+def move_files():
+    ''' This function moves files from a source to a destination path'''
+    
+    root = r'\\amowirrfpspd01\Archive01\LIMS_TCR1'
+    endpoint_path = path.join(root, 'Endpoint')
+
+
+    for name in os.listdir(endpoint_path):
+        if name == 'Thumbs.db':
+            continue
+        file = path.join(endpoint_path, name)
+        x = datetime.date.fromtimestamp(path.getmtime(file))
+        if x == datetime.date.today():
+            continue
+        ago_raw = str(datetime.date.today() - x)
+        ago_list = ago_raw.split(' ')
+        ago_str_int = int(ago_list[0])
+
+        
+        if ago_str_int > 15:
+            date_modified = get_date_modified(file)
+            current_year = getYear(str(x))
+            destination = path.join(root, current_year, date_modified)
+            shutil.move(file, destination)
+
+            
+
+if __name__ == '__main__':
+    move_files()
+
+    
+
