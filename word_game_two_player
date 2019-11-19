@@ -1,0 +1,386 @@
+# import math
+import random
+# import string
+
+VOWELS = 'aeiou'
+CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
+HAND_SIZE = 8
+
+SCRABBLE_LETTER_VALUES = {
+    'a': 1, 'b': 3, 'c': 3, 'd': 2, 'e': 1, 'f': 4, 'g': 2, 'h': 4, 'i': 1, 'j': 8, 'k': 5, 'l': 2, 'm': 4, 'n': 2, 'o': 1, 'p': 3, 'q': 10, 'r': 1, 's': 1, 't': 1, 'u': 2, 'v': 5, 'w': 4, 'x': 8, 'y': 4, 'z': 10, '0': 0
+}
+
+letter_bag = {'a': 9, 'b': 2, 'c': 2, 'd': 4, 'e': 12, 'f': 2, 'g': 3, 'h': 2, 'i': 9, 'j': 1, 'k': 1, 'l': 4, 'm': 2, 'n': 6, 'o': 8, 'p': 2, 'q': 1, 'r': 6, 's': 4, 't': 6, 'u': 4, 'v': 2, 'w': 2, 'x': 1, 'y': 2, 'z': 1, '0': 2}
+
+
+letter_values_dict = {}
+
+
+WORDLIST_FILENAME = "words.txt"
+
+
+def load_words():
+    """
+    Returns a list of valid words. Words are strings of lowercase letters.
+
+    Depending on the size of the word list, this function may
+    take a while to finish.
+    """
+    print("Loading word list from file...")
+    # inFile: file
+    inFile = open(WORDLIST_FILENAME, 'r')
+    # line: string
+    line = inFile.readline()
+    # wordlist: list of strings
+    wordlist = line.split()
+    print("  ", len(wordlist), "words loaded.")
+    # print(letter_values_dict)
+    # letter_values_dict = score_word_list(wordlist)
+    # print(letter_values_dict)
+
+    return wordlist
+
+
+def score_word_list(word_list):
+    word_dict = {}
+    for i in word_list:
+        word_dict[i] = score_word(i)
+
+    return word_dict
+
+
+def dict_list(letter_bag):
+
+    # make dictionary of letters into a list
+    # return a list of all letters in the bag at the start of the game
+
+    letters = []
+    for i, j in letter_bag.items():
+        for letter in range(j):
+            letters.append(i)
+
+    return letters
+
+
+def deal_tiles(n, letter_bag):
+
+    # each player gets 7 tiles
+    # after a turn, the player gets tiles in return so that they have 7 tiles again - unless there are no more tiles in the tile_bag
+
+    # letter_bag: a dictionary. key is the letter, value is the amount of tiles there are associated with that letter
+
+    # hand is a list of letters
+
+    hand = []
+
+    for i in range(n):
+        letter_list = dict_list(letter_bag)
+        letter_choice = random.choice(letter_list)
+        hand.append(letter_choice)
+        letter_bag[letter_choice] -= 1
+
+    return hand
+
+
+def append_hand(hand):
+
+    n = 8 - len(hand)
+    if sum(letter_bag.values()) < n:
+        x = sum(letter_bag.values())
+        new_hand = deal_tiles(x, letter_bag)
+    else:
+        new_hand = deal_tiles(n, letter_bag)
+
+    for j in hand:
+        new_hand.append(j)
+
+    return new_hand
+
+
+def score_word(word):
+
+    score = 0
+    list_word = list(word)
+
+    for i in list_word:
+        score += SCRABBLE_LETTER_VALUES[i]
+
+    if len(word) > 4:
+        bonus_word = []
+        for i in word:
+            bonus_word.append(SCRABBLE_LETTER_VALUES[i])
+        bonus = max(bonus_word)
+        score += bonus
+        if len(word) == 8:
+            score += 6
+
+    return score
+
+
+def blank_tile(word, hand, word_list):
+    # a blank tile is in the hand
+    # word played with a letter not in hand
+
+    x = hand.count('0')
+    list_word = list(word)
+    if word in word_list:
+        while x > 0:
+            for i in word:
+                if word.count(i) > hand.count(i):
+                    replace_letter(list_word, i, '0')
+                    x -= 1
+                    if x == 0:
+                        break
+                else:
+                    continue
+
+    returnWord = ''
+    for m in list_word:
+        returnWord += m
+
+    return returnWord
+
+
+def valid_word(word, hand, word_list, hindsight=False):
+
+    if hindsight == False:
+        if word not in word_list:
+            return False
+    if '0' in hand:
+        word = blank_tile(word, hand, word_list)
+    for i in word:
+        if i not in hand:
+            return False
+        else:
+            if hand.count(i) >= word.count(i):
+                continue
+            else:
+                return False
+    return True
+
+
+def hindsight(hand, word_list):
+
+    highest_word = []
+    highest_score = 0
+    for i in letter_values_dict.keys():
+        if valid_word(i, hand, word_list, True):
+            if letter_values_dict[i] > highest_score:
+                highest_score = letter_values_dict[i]
+                highest_word = []
+                highest_word.append(i)
+            elif letter_values_dict[i] == highest_score:
+                highest_word.append(i)
+    
+    return highest_word, highest_score
+
+def update_hand(word, hand):
+
+    for i in word:
+        remove_letter(i, hand)
+
+    return hand
+
+
+def remove_letter(letter, hand):
+
+    for i in range(len(hand)):
+        if hand[i] == letter:
+            hand.pop(i)
+            return
+
+
+def replace_letter(word, x, y):
+    # word is a list
+    # x = letter to replace
+    # y = letter to replace x with
+    count = -1
+    for i in word:
+        count += 1
+        if i == x:
+            word.pop(count)
+            word.insert(count, y)
+            return
+
+
+def swap_tiles(hand, letter_bag):
+
+    swap_n = list(input('Which letters do you want to swap: '))
+
+    for i in swap_n:
+        letter_bag[i] += 1
+        remove_letter(i, hand)
+
+    hand = append_hand(hand)
+
+    return hand
+
+
+def play_hand(hand, word_list, st):
+    ''' return played_word if it is '!!' or '*'
+     otherwise, function will return the updated hand with the played_word's letters missing
+     up_hand is a list '''
+
+    shuff_flag = True
+    while shuff_flag:
+        played_word = input('>>> ').lower()
+        if played_word == '!!' or played_word == "*":
+            return played_word
+        if played_word == 'st':
+            if st > 0:
+                return played_word
+        #        play_hand(hand, word_list, st)
+            else:
+                print('You have no swaps left numbnut, try again.')
+                continue
+        if played_word == 'p':
+            random.shuffle(hand)
+            display_hand(hand)
+            continue
+        if valid_word(played_word, hand, word_list):
+            if '0' in hand:
+                played_word = blank_tile(played_word, hand, word_list)
+            return played_word
+        else:
+            print('Invalid word played')
+            return '**'
+
+
+def display_hand(hand):
+
+    set_hand = set(hand)
+    returnString = ''
+
+    for i in set_hand:
+        returnString += '{} - {} | '.format(i, SCRABBLE_LETTER_VALUES[i])
+
+    print(returnString + '\n')
+
+    for i in hand:
+        print(i, end=' ')
+
+    print('\n')
+
+def check_hand(hand, word_list):
+    
+    hindsight_tuple = hindsight(hand, word_list)
+    if len(hindsight_tuple[0]) == 0:
+        return False
+    else: return True
+
+
+def play_game():
+
+    player1 = input("Player 1 name: ").title()
+    player2 = input('Player 2 name: ').title()
+
+    player1_hand = deal_tiles(8, letter_bag)
+    player2_hand = deal_tiles(8, letter_bag)
+
+    st1 = 2
+    st2 = 2
+
+    # each player starts with 0 points
+    player1_score = 0
+    player2_score = 0
+
+    # boolean to check which while loop to run
+    in_play = True
+    player_x = True
+
+    # what to do when a player selects to pass their turn
+    pass_count = 4
+
+    print('!! to QUIT, * to PASS, "st" to SWAP all 8 tiles, "p" to shuffle your letters')
+
+    while in_play:
+        while player_x:
+            display_hand(player1_hand)
+            print('-- {}, play a word --'.format(player1))
+            play1_turn = play_hand(player1_hand, word_list, st1)
+            if play1_turn == 'st':
+                player1_hand = swap_tiles(player1_hand, letter_bag)
+                st1 -= 1
+                player_x = False
+            elif play1_turn == '!!':
+                in_play = False
+                break
+            elif play1_turn == '*':
+                pass_count -= 1
+                player_x = False
+            elif play1_turn == '**':
+                continue
+            else:
+                print('Score for word -- {}'.format(score_word(play1_turn)))
+                player1_score += score_word(play1_turn)
+                print('\n{}\'s Score -- {} \t\t {}\'s Score -- {}'.format(player1, player1_score, player2, player2_score))
+                if '0' not in player1_hand:
+                    hindsight_tuple = hindsight(player1_hand, play1_turn)
+                    print('Hindsight: highest possible score -- {}'.format(hindsight_tuple[1]))
+                    for m in hindsight_tuple[0]:
+                        print(m, end=' ')
+                        print('\n')
+                else: print(' - No hindsight information available - ')
+                pass_count = 4
+                update_hand(play1_turn, player1_hand)
+                player1_hand = append_hand(player1_hand)
+                print('Number of letters left in bag: {}\n'.format(sum(letter_bag.values())))
+                player_x = False
+
+        while not player_x:
+            display_hand(player2_hand)
+            print('-- {}, play a word --'.format(player2))
+            play2_turn = play_hand(player2_hand, word_list, st2)
+            if play2_turn == 'st':
+                player2_hand = swap_tiles(player2_hand, letter_bag)
+                st2 -= 1
+                player_x = True
+            elif play2_turn == '!!':
+                in_play = False
+                break
+            elif play2_turn == '*':
+                pass_count -= 1
+                player_x = True
+            elif play2_turn == '**':
+                continue
+            else:
+                print('Score for word -- {}'.format(score_word(play2_turn)))
+                player2_score += score_word(play2_turn)
+                print('\n{}\'s Score -- {} \t\t {}\'s Score -- {}'.format(player1, player1_score, player2, player2_score))
+                if '0' not in player2_hand:
+                    hindsight_tuple = hindsight(player2_hand, play2_turn)
+                    print('Hindsight: highest possible score -- {}'.format(hindsight_tuple[1]))
+                    for m in hindsight_tuple[0]:
+                        print(m, end=' ')
+                        print('\n')
+                else: print(' - No hindsight information available - ')
+                pass_count = 4
+                update_hand(play2_turn, player2_hand)
+                player2_hand = append_hand(player2_hand)
+                print('Number of letters left in bag: {} \n'.format(sum(letter_bag.values())))
+                player_x = True
+
+        if sum(letter_bag.values()) == 0:
+            if check_hand(player1_hand, word_list) == False and check_hand(player2_hand, word_list) == False:
+                in_play = False
+        if pass_count == 0:
+            in_play = False
+
+    if player1_score > player2_score:
+        print('{} wins with a score of {}'.format(player1, player1_score))
+        print('The loser -> {} with a score of {}... u suck'.format(player2, player2_score))
+
+    elif player1_score < player2_score:
+        print('{} wins with a score of {}'.format(player2, player2_score))
+        print('The loser -> {} with a score of {}... wut r u doing with ur life'.format(player1, player1_score))
+
+    else:
+        print('TIE GAME MOTHERFUCKERS')
+
+
+if __name__ == '__main__':
+    word_list = load_words()
+    letter_values_dict = score_word_list(word_list)
+
+#    print(sum(letter_bag.values()))
+#    play_game()
