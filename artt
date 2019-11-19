@@ -1,0 +1,48 @@
+"""
+Created on Wed May 22 11:03:28 2019
+
+@author: YHINE
+"""
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import time, os
+
+''' this applications opens artt and automatically reports hours from 
+
+
+artt = 'http://w3.ag.monsanto.com/artt/asp/default.asp'
+
+capabilities = {
+          'browserName': 'chrome',
+          'chromeOptions':  {
+            'useAutomationExtension': False,
+            'forceDevToolsScreenshot': True,
+            'args': ['--start-maximized', '--disable-infobars']
+          }
+        }
+
+userID = os.getenv('username')
+password = os.getenv('password')
+driver = webdriver.Chrome(desired_capabilities=capabilities)
+
+def report_hours():
+    driver.get(artt)
+    driver.find_element_by_name('UserID').clear()
+    driver.find_element_by_name('UserID').send_keys(userID)
+    driver.find_element_by_name('userPassword').click()
+    time.sleep(1)
+    driver.find_element_by_name('userPassword').send_keys(password, Keys.ENTER)
+
+    time.sleep(2)
+
+    driver.find_element_by_xpath("//input[@value='Book Last Months Hours for Current Period']").click()
+
+    time.sleep(2)
+
+    driver.find_element_by_name('save').click()
+    
+    time.sleep(7)
+    driver.close()
+
+if __name__ == '__main__':
+    report_hours()
