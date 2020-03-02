@@ -1,13 +1,13 @@
-ALL_LOANS_DICT = {'direct_unsub_0':[1060.98, 0.06600],
-                  'direct_unsub_1': [5319.57, 0.06000],
-                  'direct_unsub_2': [2234.94, 0.04290],
-                  'direct_unsub_3': [2365.74, 0.04660],
-                  'direct_unsub_4': [2362.65, 0.03860],
-                  'direct_unsub_5': [2910.10, 0.06800],
-                  'direct_sub_6': [5449.22, 0.04290],
-                  'direct_sub_7': [5469.33, 0.04660],
-                  'direct_sub_8': [4525.49, 0.03860],
-                  'direct_sub_9': [3495.70, 0.03400]
+ALL_LOANS_DICT = {'direct_unsub_0':[1055.70, 0.06600],
+                  'direct_unsub_1': [3364.79, 0.06000],
+                  'direct_unsub_2': [2229.49, 0.04290],
+                  'direct_unsub_3': [2362.97, 0.04660],
+                  'direct_unsub_4': [2353.46, 0.03860],
+                  'direct_unsub_5': [2910.1, 0.06800],
+                  'direct_sub_6': [5436.03, 0.04290],
+                  'direct_sub_7': [5462.96, 0.04660],
+                  'direct_sub_8': [4507.91, 0.03860],
+                  'direct_sub_9': [3476.64, 0.03400]
                   }
 
 def getIntPerYear(loan):
@@ -49,25 +49,29 @@ def getTotalOwed(loans_dict):
 
     return round(owed, 2)
 
-def addInterestToLoans(loanExcused, loans_dict):
+def addInterestToLoans(loans_dict):
     ''' ignores loans that are decremented that month, and adds compounds interest on other loans monthly '''
-
+    
+    totalInterest = 0
 
     for loan, loan_tuple in loans_dict.items():
-        if loan in loanExcused:
-            continue
-        else:
-            intToAdd = getIntPerMonth(loan_tuple)
-            loan_tuple[0] += intToAdd
+        intToAdd = getIntPerMonth(loan_tuple)
+        totalInterest += intToAdd
+        loan_tuple[0] += intToAdd
+        
+    return totalInterest
+        
 
 def getOrderedList():
 
     totalOwed = getTotalOwed(ALL_LOANS_DICT)
-    monthlyPayment = 1000
+    monthlyPayment = 400
     month = 0
     orderedList = []
+    interestAccrued = 0
 
     while totalOwed > 0:
+        interestAccrued += addInterestToLoans(ALL_LOANS_DICT)
         dictOfLoanInt = getIntPriorityDict(ALL_LOANS_DICT) # dictionary key = loan name, value = balance*interest
         loanListPriority = getPriorityDict(dictOfLoanInt) # ordered list of which loan to pay first
         loansPaid = []
@@ -86,25 +90,10 @@ def getOrderedList():
         monthlyPayment = 1000
         month += 1
         orderedList.append(loansPaid)
-        addInterestToLoans(loansPaid, ALL_LOANS_DICT)
 
+    print(interestAccrued)
     return orderedList
 
 order = getOrderedList()
 for i in enumerate(order, start=1):
     print(i)
-
-
-
-
-
-
-
-# prior = getIntPriorityDict(ALL_LOANS_DICT)
-# print(prior)
-# print('\n')
-# print(getPriorityDict(prior))
-#
-# addInterestToLoans(['direct_unsub_1', 'direct_unsub_4'], ALL_LOANS_DICT)
-# print('\n')
-# print(ALL_LOANS_DICT)
