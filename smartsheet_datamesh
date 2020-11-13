@@ -1,0 +1,74 @@
+import os
+import openpyxl as opx
+# from datetime import date
+import simple_smartsheet
+# from simple_smartsheet.models import Sheet, Column, Row, Cell, ColumnType
+# from pprint import pprint
+
+TOKEN = os.getenv("SMARTSHEET_ACCESS_TOKEN")
+smartsheet = simple_smartsheet.Smartsheet(TOKEN)
+
+wb = opx.load_workbook("5s_audit_database.xlsx")
+ws = wb['database']
+active_audits = smartsheet.sheets.get("Copy of All Active Audits SmartSheet")
+
+COLS_IN_EXCEL_DICT = {'A':'Audit ID', 'B':'Creation Date', 'C':'Status', 'D':'Reviewed', 'E':'Lab #', 'F':'Auditor', 'G':'Team', 'H':'score-sort', 'I':'score-straight', 'J':'score-shine', 'K':'Last Modified'}
+
+SS_ROW_INFO_IN_EXCEL = {}
+
+# id_col = active_audits.get_column("Audit ID")
+# create_date_col = active_audits.get_column("Creation Date")
+# status_col = active_audits.get_column("Status")
+# reviewed_col = active_audits.get_column("Reviewed")
+# lab_col = active_audits.get_column("Lab #")
+# auditor_col = active_audits.get_column("Auditor")
+# team_col = active_audits.get_column("Team")
+# sort_col = active_audits.get_column("score-sort")
+# straight_col = active_audits.get_column("score-straight")
+# shine_col = active_audits.get_column("score-shine")
+# last_modif_col = active_audits.get_column("Last Modified")
+
+
+def get_audit_ids_to_update(smartsheet_dict, excel_dict):
+    ''' return a list of audit ids that exist on the smartsheet but not the excel sheet '''
+    
+    missing_items = []
+    for key, value in smartsheet_dict.items():
+        if key not in excel_dict.keys():
+            missing_items.append(key)
+    
+    return missing_items 
+
+
+def main():
+    
+    smartsheet_rows = {}
+    for row in active_audits.rows:
+        row_id_val = row.get_cell("Audit ID").value
+        smartsheet_rows[row_id_val] = row.id
+        
+    excel_rows = {}
+    for e_row in ws.iter_rows(min_row=2, max_col=1, values_only=True):
+        row_num = 1
+        excel_rows[e_row[0]] = row_num
+        row_num += 1 
+        
+    audits_to_update = get_audit_ids_to_update(smartsheet_rows, excel_rows) #list of audit ids to update to excel
+    print(f"Rows to update in excel: {len(audits_to_update)}")
+    
+    
+    for audit in audits_to_update:
+        row_to_update = ws.max_row + 1
+        get_ss_row = active_audits.get_row(row_id=smartsheet_rows[audit])
+        # pprint(get_ss_row.__dict__)
+        for col_letter, col_name in COLS_IN_EXCEL_DICT.items():
+            cell_index = col_letter + str(row_to_update)
+            ws[cell_index] = get_ss_row.get_cell(col_name).value
+    
+    
+    wb.save("5s_audit_database.xlsx")
+    
+            
+            
+if __name__ == '__main__':
+    main()
