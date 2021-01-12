@@ -1,0 +1,103 @@
+import string
+import control_wells as cw
+from random_num_generate import generate_random_reading as grr
+
+
+alpha = string.ascii_uppercase
+ALPHABET = alpha[0:16]
+
+def main():
+    print("All user entries need to be in uppercase")
+    
+    with open("template.txt", "r") as file:
+        filedata = file.read()
+    
+    # Set controls before settings wells:
+    control_type = input("LVL, MVL, or HVL?: ")
+    endo_test = input("Is this an endo plate? Y/N: ")
+    control_result = ""
+    if endo_test == "N":
+        control_result = input("Controls passing? Y/N: ")
+    
+        if control_result == 'N':
+            fail_for_ans = input("Fail for NEG or POS? ")
+    
+    channel_c = "1A"
+    iter_count_c = 0
+    ctrls_changed = False
+    
+    while iter_count_c <= 2:
+        
+        # Set failing controls for all channels
+        if endo_test == "Y":
+            endo_wells = cw.get_unexp_ctrl_well(control_type, endo=endo_test)
+            for well in endo_wells:
+                filedata = filedata.replace(well, str(grr(well[:2], "POS")))
+        
+        
+        if control_result == "N" and ctrls_changed == False:
+            wells_to_change = cw.get_unexp_ctrl_well(control_type, fail_for_ans)
+            if fail_for_ans == "NEG":
+                for well in wells_to_change:
+                    filedata = filedata.replace(well, str(grr(well[:2], "POS")))
+                 
+            elif fail_for_ans == "POS":
+                for well in wells_to_change:
+                    filedata = filedata.replace(well, str(grr(well[:2], "NEG")))
+
+        ctrls_changed = True
+        
+        # Set non-failing controls for all channels
+        neg_dict = cw.choose_ctrl_neg(control_type, channel_c)
+        pos_dict = cw.choose_ctrl_pos(control_type, channel_c)
+        # if endo_test == "Y":
+        #     pass
+        for n, v in neg_dict.items():
+            filedata = filedata.replace(n, v)
+        for n, v in pos_dict.items():
+            filedata = filedata.replace(n, v)
+
+        iter_count_c += 1
+        if iter_count_c == 1:
+            channel_c = "1B" 
+        if iter_count_c == 2:
+            channel_c = "2B"
+
+    
+    
+    # Set sample wells        
+    channel_well = "1A"
+    iter_count = 0
+    result_input = input("POS or NEG: ")
+    while iter_count <= 2:
+        for letter in ALPHABET:
+            for i in range(1, 10):
+                old_text = channel_well + "0" + letter + str(i)
+                new_text = str(grr(channel_well, result_input))
+                filedata = filedata.replace(old_text, new_text)
+            for i in range(10, 25):
+                old_text = channel_well + letter + str(i)
+                new_text = str(grr(channel_well, result_input))
+                filedata = filedata.replace(old_text, new_text)
+        iter_count += 1
+        if iter_count == 1:
+            channel_well = "1B"
+        if iter_count == 2:
+            channel_well = "2B"
+    
+    new_filename = input("Name the new .txt file: ")
+    if new_filename[-4:] == ".txt":
+        pass
+    else:
+        new_filename = new_filename + '.txt'
+    
+    with open(new_filename, "w") as file:
+        file.write(filedata)        
+    
+    file.close()
+
+
+
+
+if __name__ == '__main__':
+    main()
