@@ -1,6 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 12 12:09:28 2021
+
+@author: yoyo
+"""
+
 import string
 import control_wells as cw
 from random_num_generate import generate_random_reading as grr
+from sample_well import fail_few_sample as ffs
 
 
 alpha = string.ascii_uppercase
@@ -63,7 +72,28 @@ def main():
         if iter_count_c == 2:
             channel_c = "2B"
 
-    
+    # fail sample wells if needed
+    sample_failure = input('Do sample wells fail? Y/N: ')
+    if sample_failure == "Y":
+        num_sample_fails = int(input("How many samples per column fail? Max 8: "))
+        num_col_fails = int(input('How many columns affected? Max 20: '))
+        fail_for = input('Should the wells be POS or NEG?: ')
+        
+        channel_well = '1A'
+        iter_count = 0
+        while iter_count <= 2:
+            get_failed_list = ffs(channel_well, num_sample_fails, num_col_fails)
+            for fail in get_failed_list:
+                filedata = filedata.replace(fail, str(grr(channel_well, fail_for)))
+            
+            iter_count += 1
+            if iter_count == 1:
+                channel_well = "1B"
+            if iter_count == 2:
+                channel_well = "2B"
+
+
+
     
     # Set sample wells        
     channel_well = "1A"
